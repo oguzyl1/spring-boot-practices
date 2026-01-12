@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: data_jpa_tekrar
+  datasource:
+    url: jdbc:postgresql://localhost:5433/app_db
+    username: postgres
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
