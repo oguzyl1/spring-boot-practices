@@ -30,7 +30,7 @@ public class Site extends BaseEntity {
     private String port;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id",nullable = false,unique = true)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
 }

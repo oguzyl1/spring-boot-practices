@@ -20,6 +20,8 @@ public class UserResponse {
     private String name;
     private String surname;
     private String email;
+    private Double maas;
+    private Integer age;
     private List<RoleDto> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

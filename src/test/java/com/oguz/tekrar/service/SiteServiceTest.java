@@ -7,6 +7,7 @@ import com.oguz.tekrar.entity.User;
 import com.oguz.tekrar.mapper.SiteMapper;
 import com.oguz.tekrar.repository.SiteRepository;
 import com.oguz.tekrar.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,17 +32,19 @@ class SiteServiceTest {
     SiteRepository siteRepository;
 
     @Mock
-     UserRepository userRepository;
+    UserRepository userRepository;
 
     @Mock
-     SiteMapper mapper;
+    SiteMapper mapper;
+
+    private static final Long SITE_ID = 1L;
+    private static final Long USER_ID = 5L;
 
     @Test
-    @DisplayName("Tüm siteleri getirmeli")
+    @DisplayName("GET ALL - Tüm siteleri getirmeli")
     void shouldReturnAllSites() {
-        Site site = Site.builder().id(1L).name("Test Site").build();
-        List<Site> siteList = List.of(site);
-        List<SiteResponse> expectedResponse = List.of(SiteResponse.builder().id(1L).name("Test Site").build());
+        List<Site> siteList = List.of(getSite());
+        List<SiteResponse> expectedResponse = List.of(getSiteResponse());
         when(siteRepository.findAll()).thenReturn(siteList);
         when(mapper.toSiteResponseList(siteList)).thenReturn(expectedResponse);
         List<SiteResponse> result = siteService.getAll();
@@ -51,105 +54,133 @@ class SiteServiceTest {
     }
 
     @Test
-    @DisplayName("ID ile site bulunduğunda SiteResponse dönmeli")
+    @DisplayName("GET BY ID - ID ile site bulunduğunda SiteResponse dönmeli")
     void shouldReturnSite_WhenIdExists() {
-        Long siteId = 1L;
-        Site site = Site.builder().id(siteId).name("Google").build();
-        SiteResponse expectedResponse = SiteResponse.builder().id(siteId).name("Google").build();
-        when(siteRepository.findById(siteId)).thenReturn(Optional.of(site));
+        Site site = getSite();
+        SiteResponse expectedResponse = getSiteResponse();
+        when(siteRepository.findById(SITE_ID)).thenReturn(Optional.of(site));
         when(mapper.toDto(site)).thenReturn(expectedResponse);
-        SiteResponse result = siteService.getSiteById(siteId);
+        SiteResponse result = siteService.getSiteById(SITE_ID);
+        assertNotNull(result);
         assertEquals("Google", result.getName());
-        verify(siteRepository).findById(siteId);
+        verify(siteRepository).findById(SITE_ID);
     }
 
     @Test
-    @DisplayName("ID ile site bulunamazsa hata fırlatmalı")
+    @DisplayName("GET BY ID - ID ile site bulunamazsa EntityNotFoundException fırlatmalı")
     void shouldThrowException_WhenSiteNotFound() {
-        Long siteId = 99L;
-        when(siteRepository.findById(siteId)).thenReturn(Optional.empty());
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> siteService.getSiteById(siteId));
-        assertEquals("Aranan Id ile site bulunamadı.", exception.getMessage());
+        when(siteRepository.findById(SITE_ID)).thenReturn(Optional.empty());
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> siteService.getSiteById(SITE_ID));
+        assertTrue(exception.getMessage().contains("Aranan Id ile site bulunamadı."));
     }
 
     @Test
-    @DisplayName("Site oluştururken User bulunduysa işlem başarılı olmalı")
+    @DisplayName("CREATE - User mevcutsa site başarıyla oluşturulmalı")
     void shouldCreateSite_WhenUserExists() {
-        Long userId = 5L;
-        SiteRequest request = SiteRequest.builder().name("New Site").userId(userId).build();
-        User user = User.builder().id(userId).name("Site Owner").build();
-        Site siteToSave = Site.builder().name("New Site").build();
-        Site savedSite = Site.builder().id(1L).name("New Site").user(user).build();
-        SiteResponse expectedResponse = SiteResponse.builder().id(1L).name("New Site").build();
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        SiteRequest request = getSiteRequest();
+        User user = getUser();
+        Site siteToSave = getSite();
+        Site savedSite = getSite();
+        savedSite.setUser(user);
+        SiteResponse expectedResponse = getSiteResponse();
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
         when(mapper.toEntity(request)).thenReturn(siteToSave);
         when(siteRepository.save(siteToSave)).thenReturn(savedSite);
         when(mapper.toDto(savedSite)).thenReturn(expectedResponse);
         SiteResponse result = siteService.create(request);
         assertNotNull(result);
-        assertEquals(user, siteToSave.getUser());
-        verify(userRepository).findById(userId);
-        verify(siteRepository).save(any(Site.class));
+        assertEquals(SITE_ID, result.getId());
+        verify(userRepository).findById(USER_ID);
+        verify(siteRepository).save(siteToSave);
     }
 
     @Test
-    @DisplayName("Site oluştururken User bulunamazsa hata fırlatmalı ve kayıt yapmamalı")
+    @DisplayName("CREATE - User bulunamazsa EntityNotFoundException fırlatmalı")
     void shouldThrowException_WhenUserNotFound_DuringCreate() {
-        Long userId = 99L;
-        SiteRequest request = SiteRequest.builder().name("New Site").userId(userId).build();
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> siteService.create(request));
+        SiteRequest request = getSiteRequest();
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> siteService.create(request));
         assertEquals("User bulunamadı", exception.getMessage());
         verify(siteRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Site silme işlemi başarılı olmalı")
+    @DisplayName("DELETE - Site silme işlemi başarılı olmalı")
     void shouldDeleteSite_WhenIdExists() {
-        Long siteId = 1L;
-        Site site = Site.builder().id(siteId).build();
-        when(siteRepository.findById(siteId)).thenReturn(Optional.of(site));
-        siteService.deleteSite(siteId);
+        Site site = getSite(); // Test sınıfınızın altındaki yardımcı metottan site nesnesi alıyoruz
+        when(siteRepository.findById(SITE_ID)).thenReturn(Optional.of(site));
+        siteService.deleteSite(SITE_ID);
         verify(siteRepository).delete(site);
     }
 
     @Test
-    @DisplayName("Silinecek site bulunamazsa hata fırlatmalı")
+    @DisplayName("DELETE - Silinecek site bulunamazsa EntityNotFoundException fırlatmalı")
     void shouldThrowException_WhenDeletingNonExistingSite() {
-        Long siteId = 99L;
-        when(siteRepository.findById(siteId)).thenReturn(Optional.empty());
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> siteService.deleteSite(siteId));
-        assertEquals("Silinmek istenen id ile site bulumadı.", exception.getMessage());
+        when(siteRepository.findById(SITE_ID)).thenReturn(Optional.empty());
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> siteService.deleteSite(SITE_ID));
+        assertTrue(exception.getMessage().contains("site bulunamadı"));
         verify(siteRepository, never()).delete(any());
     }
 
     @Test
-    @DisplayName("Site güncelleme başarılı olmalı")
+    @DisplayName("UPDATE - Site güncelleme başarılı olmalı")
     void shouldUpdateSite_WhenIdExists() {
-        Long siteId = 1L;
-        SiteRequest request = SiteRequest.builder().name("Updated Name").build();
-        Site existingSite = Site.builder().id(siteId).name("Old Name").build();
-        Site updatedSite = Site.builder().id(siteId).name("Updated Name").build();
-        SiteResponse response = SiteResponse.builder().id(siteId).name("Updated Name").build();
-        when(siteRepository.findById(siteId)).thenReturn(Optional.of(existingSite));
+        SiteRequest request = getSiteRequest();
+        request.setName("Updated Google");
+        Site existingSite = getSite();
+        Site updatedSite = getSite();
+        updatedSite.setName("Updated Google");
+        SiteResponse response = getSiteResponse();
+        response.setName("Updated Google");
+        when(siteRepository.findById(SITE_ID)).thenReturn(Optional.of(existingSite));
         when(siteRepository.save(existingSite)).thenReturn(updatedSite);
         when(mapper.toDto(updatedSite)).thenReturn(response);
-        SiteResponse result = siteService.updateSite(request, siteId);
+        SiteResponse result = siteService.updateSite(request, SITE_ID);
         assertNotNull(result);
-        assertEquals("Updated Name", result.getName());
+        assertEquals("Updated Google", result.getName());
         verify(mapper).updateEntityFromRequest(request, existingSite);
         verify(siteRepository).save(existingSite);
     }
 
     @Test
-    @DisplayName("Güncellenecek site bulunamazsa hata fırlatmalı")
+    @DisplayName("UPDATE - Güncellenecek site bulunamazsa EntityNotFoundException fırlatmalı")
     void shouldThrowException_WhenUpdatingNonExistingSite() {
-        Long siteId = 99L;
-        SiteRequest request = SiteRequest.builder().name("Updated Name").build();
-        when(siteRepository.findById(siteId)).thenReturn(Optional.empty());
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> siteService.updateSite(request, siteId));
-        assertEquals("Güncellenmek istenen id ile site bulunamadı.", exception.getMessage());
+        SiteRequest request = getSiteRequest();
+        when(siteRepository.findById(SITE_ID)).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class,
+                () -> siteService.updateSite(request, SITE_ID));
         verify(mapper, never()).updateEntityFromRequest(any(), any());
         verify(siteRepository, never()).save(any());
+    }
+
+    private Site getSite() {
+        return Site.builder()
+                .id(SITE_ID)
+                .name("Google")
+                .build();
+    }
+
+    private User getUser() {
+        return User.builder()
+                .id(USER_ID)
+                .name("Site Owner")
+                .build();
+    }
+
+    private SiteRequest getSiteRequest() {
+        return SiteRequest.builder()
+                .name("Google")
+                .userId(USER_ID)
+                .build();
+    }
+
+    private SiteResponse getSiteResponse() {
+        return SiteResponse.builder()
+                .id(SITE_ID)
+                .name("Google")
+                .build();
     }
 }
