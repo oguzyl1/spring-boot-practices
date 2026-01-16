@@ -38,12 +38,12 @@ class SiteControllerTest {
     @MockitoBean
     private SiteService siteService;
 
+    private static final Long SITE_ID = 1L;
+
     @Test
     @DisplayName("GET ALL - Tüm siteleri getirmeli")
     void shouldReturnAllSites() throws Exception {
-        SiteResponse response = SiteResponse.builder().id(1L).name("Google").port("8080").build();
-        List<SiteResponse> responseList = List.of(response);
-        when(siteService.getAll()).thenReturn(responseList);
+        when(siteService.getAll()).thenReturn(List.of(getSiteResponse()));
         mockMvc.perform(get(SiteApiPath.BASE_URL + SiteApiPath.GET_ALL)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -55,58 +55,63 @@ class SiteControllerTest {
     @Test
     @DisplayName("GET BY ID - ID ile site getirilmeli")
     void shouldReturnSiteById() throws Exception {
-        Long siteId = 1L;
-        SiteResponse response = SiteResponse.builder().id(siteId).name("Amazon").port("443").build();
-        when(siteService.getSiteById(siteId)).thenReturn(response);
-        String url = SiteApiPath.BASE_URL + SiteApiPath.GET_BY_ID.replace("{id}", siteId.toString());
-        mockMvc.perform(get(url)
+        when(siteService.getSiteById(SITE_ID)).thenReturn(getSiteResponse());
+        mockMvc.perform(get(SiteApiPath.BASE_URL + SiteApiPath.GET_BY_ID, SITE_ID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(1)))
-                .andExpect(jsonPath("$.name", is("Amazon")));
+                .andExpect(jsonPath("$.id", is(SITE_ID.intValue())))
+                .andExpect(jsonPath("$.name", is("Google")));
     }
 
     @Test
     @DisplayName("CREATE - Yeni site oluşturulmalı")
     void shouldCreateSite() throws Exception {
-        SiteRequest request = SiteRequest.builder().name("Facebook").port("80").userId(5L).build();
-        SiteResponse response = SiteResponse.builder().id(10L).name("Facebook").port("80").build();
-        when(siteService.create(any(SiteRequest.class))).thenReturn(response);
+        when(siteService.create(any(SiteRequest.class))).thenReturn(getSiteResponse());
         mockMvc.perform(post(SiteApiPath.BASE_URL + SiteApiPath.CREATE)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(getSiteRequest())))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(10)))
-                .andExpect(jsonPath("$.name", is("Facebook")));
+                .andExpect(jsonPath("$.id", is(SITE_ID.intValue())))
+                .andExpect(jsonPath("$.name", is("Google")));
     }
 
     @Test
     @DisplayName("UPDATE - Site güncellenmeli")
     void shouldUpdateSite() throws Exception {
-        Long siteId = 1L;
-        SiteRequest request = SiteRequest.builder().name("Updated Name").port("9090").build();
-        SiteResponse response = SiteResponse.builder().id(siteId).name("Updated Name").port("9090").build();
-        when(siteService.updateSite(any(SiteRequest.class), eq(siteId))).thenReturn(response);
-        String url = SiteApiPath.BASE_URL + SiteApiPath.UPDATE.replace("{id}", siteId.toString());
-        mockMvc.perform(put(url)
+        when(siteService.updateSite(any(SiteRequest.class), eq(SITE_ID))).thenReturn(getSiteResponse());
+        mockMvc.perform(put(SiteApiPath.BASE_URL + SiteApiPath.UPDATE, SITE_ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(getSiteRequest())))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is("Updated Name")));
+                .andExpect(jsonPath("$.name", is("Google")));
     }
 
     @Test
     @DisplayName("DELETE - Site silinmeli")
     void shouldDeleteSite() throws Exception {
-        Long siteId = 1L;
-        doNothing().when(siteService).deleteSite(siteId);
-        String url = SiteApiPath.BASE_URL + SiteApiPath.DELETE.replace("{id}", siteId.toString());
-        mockMvc.perform(delete(url)
+        doNothing().when(siteService).deleteSite(SITE_ID);
+        mockMvc.perform(delete(SiteApiPath.BASE_URL + SiteApiPath.DELETE, SITE_ID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isNoContent());
+    }
+
+    private SiteRequest getSiteRequest() {
+        return SiteRequest.builder()
+                .name("Google")
+                .port("8080")
+                .userId(5L)
+                .build();
+    }
+
+    private SiteResponse getSiteResponse() {
+        return SiteResponse.builder()
+                .id(SITE_ID)
+                .name("Google")
+                .port("8080")
+                .build();
     }
 }

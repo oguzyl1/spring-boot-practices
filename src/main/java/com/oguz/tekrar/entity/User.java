@@ -20,7 +20,7 @@ public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name= "user_id")
+    @Column(name = "user_id")
     private Long id;
 
     @Column(name = "user_name")
@@ -29,8 +29,14 @@ public class User extends BaseEntity {
     @Column(name = "user_surname")
     private String surname;
 
-    @Column(name = "user_email",unique = true)
+    @Column(name = "user_email", unique = true)
     private String email;
+
+    @Column(name = "user_age")
+    private Integer age;
+
+    @Column(name = "user_maas")
+    private Double maas;
 
     @Column(name = "user_password")
     private String password;
@@ -39,6 +45,6 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Role> roles = new ArrayList<>();
 
-    @OneToOne(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Site site;
 }

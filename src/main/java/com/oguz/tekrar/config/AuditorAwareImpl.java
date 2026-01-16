@@ -1,6 +1,7 @@
 package com.oguz.tekrar.config;
 
 import org.springframework.data.domain.AuditorAware;
+
 import java.util.Optional;
 
 public class AuditorAwareImpl implements AuditorAware<Long> {

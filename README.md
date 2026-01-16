@@ -31,6 +31,13 @@ Temel CRUD işlemlerinin ötesinde, veritabanı tutarlılığı ve kodun sürdü
 ### 4. API Dokümantasyonu
 * Swagger UI entegrasyonu yapıldı. Proje ayağa kalktığında `/swagger-ui/index.html` adresinden endpointler test edilebilir.
 
+### 5. Advanced JPQL (Java Persistence Query Language)
+Repository katmanında standart JPA metodlarının yetersiz kaldığı durumlar için **`@Query`** anotasyonu ile özel JPQL sorguları yazılmıştır:
+* **Projection (DTO Mapping):** Veritabanından tüm entity'yi çekmek yerine, sadece ihtiyaç duyulan alanların çekilip Constructor Expression (`new com.oguz...`) ile doğrudan DTO'ya dönüştürülmesi (Performans artışı).
+* **String Manipülasyonları:** `LOWER`, `CONCAT`, `LIKE` fonksiyonları ile büyük/küçük harf duyarsız (Case-insensitive) dinamik aramalar.
+* **Aggregate Functions:** `SUM`, `COUNT` gibi fonksiyonlarla veritabanı seviyesinde hesaplamalar.
+* **Complex Conditions:** `IN`, `BETWEEN`, `IS NULL` ve `ORDER BY` gibi operatörlerin kullanımı.
+
 ## 🧪 Test Stratejileri (Testing)
 Projede **Unit Test** ve **Integration (Slice) Test** yaklaşımları hibrit olarak kullanılmıştır:
 
@@ -48,6 +55,6 @@ Projede **Unit Test** ve **Integration (Slice) Test** yaklaşımları hibrit ola
 
 Bu proje yaşayan bir repodur. İlerleyen aşamalarda eklenecek özellikler:
 
-- [ ] **JPQL & Native Queries:** Repository katmanında karmaşık özel sorguların yazılması (JOIN FETCH, Group By vb.).
+- [x] **JPQL & Custom Queries:** Repository katmanında DTO Projection, Aggregations ve mantıksal operatörler içeren özel sorgular.
 - [ ] **Criteria API:** Dinamik sorgu oluşturma örnekleri.
 - [ ] **Security:** `AuditorAware` içindeki hardcoded ID'nin Spring Security Context'ten alınması.
