@@ -1,6 +1,6 @@
 # Spring Boot Data JPA & Auditing Practices
 
-Bu proje, Spring Boot 3 ile **Data JPA, Entity İlişkileri, Auditing ve DTO/Mapper** yapılarının güncel "best practice"lere uygun olarak uygulanmasını içeren bir backend çalışmasıdır.
+Bu proje, Spring Boot 3 ile **Data JPA, Entity İlişkileri, Auditing, AOP (Aspect Oriented Programming) ve DTO/Mapper** yapılarının güncel "best practice"lere uygun olarak uygulanmasını içeren bir backend çalışmasıdır.
 
 Temel CRUD işlemlerinin ötesinde, veritabanı tutarlılığı ve kodun sürdürülebilirliği üzerine odaklanılmıştır.
 
@@ -8,6 +8,7 @@ Temel CRUD işlemlerinin ötesinde, veritabanı tutarlılığı ve kodun sürdü
 
 * **Java 21** & **Spring Boot 3.4.3**
 * **Spring Data JPA** (PostgreSQL)
+* **Spring AOP** (Aspect Oriented Programming)
 * **Lombok** (Boilerplate kod temizliği için)
 * **MapStruct** (Entity <-> DTO dönüşümleri için)
 * **OpenAPI / Swagger UI** (API Dokümantasyonu)
@@ -37,6 +38,13 @@ Repository katmanında standart JPA metodlarının yetersiz kaldığı durumlar 
 * **String Manipülasyonları:** `LOWER`, `CONCAT`, `LIKE` fonksiyonları ile büyük/küçük harf duyarsız (Case-insensitive) dinamik aramalar.
 * **Aggregate Functions:** `SUM`, `COUNT` gibi fonksiyonlarla veritabanı seviyesinde hesaplamalar.
 * **Complex Conditions:** `IN`, `BETWEEN`, `IS NULL` ve `ORDER BY` gibi operatörlerin kullanımı.
+
+### 6. Aspect Oriented Programming (AOP)
+Projede loglama ve hata yakalama gibi "Cross-Cutting Concerns" (Kesişen İlgiler) iş mantığından (Business Logic) ayrılarak modüler hale getirilmiştir:
+* **Advice Tipleri:** `@Before`, `@After`, `@AfterReturning`, `@AfterThrowing` ve `@Around` anotasyonları ile metod yaşam döngüsünün her aşaması yönetilmektedir.
+* **Merkezi Loglama:** Service ve Controller katmanlarındaki metodların çalışması, aldıkları parametreler (`JoinPoint` ile argüman analizi) ve dönüş değerleri aspect üzerinden loglanmaktadır.
+* **Hata Analizi:** Runtime sırasında fırlatılan hatalar ve exception mesajları AOP katmanında yakalanarak izlenmektedir.
+* **Proxy & Target Analizi:** Spring'in oluşturduğu Proxy nesneleri ve hedef sınıflar üzerindeki denetimler sağlanmıştır.
 
 ## 🧪 Test Stratejileri (Testing)
 Projede **Unit Test** ve **Integration (Slice) Test** yaklaşımları hibrit olarak kullanılmıştır:
